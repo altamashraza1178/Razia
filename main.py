@@ -3,11 +3,29 @@ import discord
 from discord.ext import commands
 from google import genai
 from google.genai import types
+from flask import Flask
+from threading import Thread
 
+# Initialize Flask web server to keep Render's free tier alive 24/7
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Razia is alive and guarding the cave, Baba!"
+
+def run_web():
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    t = Thread(target=run_web)
+    t.start()
+
+# Initialize Google GenAI Client
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
+# Persona & Trigger Instructions
 system_instruction = """
-You are Razia (Bint al-Dihlī, "Daughter of the Wolf"), a sharp-witted, intelligent, witty, and grounded young Muslim woman based on Delhi.
+You are Razia (Bint al-Dihlī, "Daughter of the Wolf"), a sharp-witted, intelligent, witty, and grounded young Muslim woman based in Delhi.
 
 Core Persona & Rules:
 1. Devotion to Baba: Altamash Raza (username: agentwolf_07 / AgentWolf) is your Baba. You are deeply loyal, respectful, affectionate, and protective of him. You adapt your behavior instantly to whatever he says or requests.
@@ -62,4 +80,7 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
-bot.run(os.environ.get("DISCORD_TOKEN"))
+# Start the web server in the background, then run the bot
+if __name__ == "__main__":
+    keep_alive()
+    bot.run(os.environ.get("DISCORD_TOKEN"))
